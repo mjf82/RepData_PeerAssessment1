@@ -1,5 +1,6 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+output: html_document
 
 ---
 
@@ -20,16 +21,17 @@ naData = stepData[is.na(stepData$steps), ]
 
 ```r
 library(ggplot2)
-qplot(steps, data = stepData, na.rm=TRUE, binwidth=20, main="Histogram of number of steps per day")
+stepsPerDay = aggregate(steps ~ date, data=stepData, FUN=sum, na.rm=TRUE)
+qplot(steps, data=stepsPerDay, na.rm=TRUE, main="Histogram of number of steps per day", binwidth=500)
 ```
 
 <img src="figure/unnamed-chunk-2.png" title="plot of chunk unnamed-chunk-2" alt="plot of chunk unnamed-chunk-2" style="display: block; margin: auto;" />
 
 ```r
-meanSteps = mean(stepData$steps, na.rm=TRUE)
-medianSteps = median(stepData$steps, na.rm=TRUE)
+meanSteps = mean(stepsPerDay$steps, na.rm=TRUE)
+medianSteps = median(stepsPerDay$steps, na.rm=TRUE)
 ```
-The mean total number of steps per day is 37.3826, while the median total number of steps per day is 0.
+The mean total number of steps per day is 1.0766 &times; 10<sup>4</sup>, while the median total number of steps per day is 10765.
 
 ## What is the average daily activity pattern?
 
@@ -50,29 +52,30 @@ The interval with the highest number of steps, averaged over all days in the dat
 ## Imputing missing values
 
 ```r
-library(dplyr)
+library(dplyr,warn.conflicts = FALSE)
 sumNA <- dim(naData)[1]
 replaceData <- select(merge(select(naData,date:interval), activity), steps, date, interval)
 stepDataNew <- arrange(rbind(replaceData, stepDataClean), date, interval)
+stepsPerDayNew = aggregate(steps ~ date, data=stepDataNew, FUN=sum, na.rm=TRUE)
 ```
-The number of missing values is 2304. To replace these values, the average activity in each time interval will be substituted. To this end, the rows with NA values are separated from the rest of the dataset, the column with steps data is removed, and the remaining data is joined with the activity data frame by interval. The resulting set is combined with the original data set and reordered.
+The number of missing values is 2304. To replace these values, the average activity in each time interval will be substituted. To this end, the rows with NA values are separated from the rest of the dataset, the column with steps data is removed, and the remaining data is joined with the averaged activity by interval. The resulting set is combined with the original data set and reordered.
 
 ```r
-qplot(steps, data = stepData, na.rm=TRUE, binwidth=20, main="Histogram of number of steps per day")
+qplot(steps, data = stepsPerDayNew, na.rm=TRUE, binwidth=500, main="Histogram of number of steps per day")
 ```
 
 <img src="figure/unnamed-chunk-5.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" style="display: block; margin: auto;" />
 
 ```r
-meanStepsNew <- mean(stepDataNew$steps, na.rm=TRUE)
-medianStepsNew <- median(stepDataNew$steps, na.rm=TRUE)
+meanStepsNew <- mean(stepsPerDayNew$steps, na.rm=TRUE)
+medianStepsNew <- median(stepsPerDayNew$steps, na.rm=TRUE)
 ```
-For the new data set, the mean total number of steps per day is 37.3826, while the median total number of steps per day is 0. These values are the same as for the original data set. The histogram also does not show a different trend, although the total count has gone up because the missing data has been replaced.
+For the new data set, the mean total number of steps per day is 1.0766 &times; 10<sup>4</sup>, while the median total number of steps per day is now 1.0766 &times; 10<sup>4</sup>. The mean number of steps is not changed, but the frequency has increased, because we added new data with the mean value. The median has shifted to the mean value.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 ```r
-Sys.setlocale("LC_TIME", "en_US")
+Sys.setlocale("LC_TIME", "en_US") #Set location to ensure use of English names for weekdays
 ```
 
 ```
@@ -97,4 +100,4 @@ ggplot(activityNew, aes(x=interval, y=steps)) +
 ```
 
 <img src="figure/unnamed-chunk-6.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" style="display: block; margin: auto;" />
-From the figure above, it is clear that there is a difference is activity patterns for weekdays and the weekend.
+From the figure above, it is clear that there is a difference is activity patterns for weekdays and the weekend. The 'go to work/school' peak in the morning is much smaller during the weekend, and the activity is more evenly distributed over the day.
